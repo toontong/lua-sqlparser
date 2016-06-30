@@ -3,9 +3,10 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
-static const char* ParserMetaName = "gsqlparser.Parser";
+static const char* ParserMetaName = "_metatable.Parser";
 
-int Parser_init_on_luaopen(lua_State *L){
+/* 建仓一个名为ParserMetaName的全局table变量,填充Parser_methods函数表 */
+int Parser_register_on_luaopen(lua_State *L){
     if(0 == luaL_newmetatable(L, ParserMetaName)){
        luaL_error(L, "userdata key already has the key tname");
     }
@@ -13,12 +14,15 @@ int Parser_init_on_luaopen(lua_State *L){
     lua_pushvalue(L, -2);    /* pushes the metatable */
     lua_settable(L, -3); /* metatable.__index = metatable */
 
-    luaL_openlib(L, NULL, Parser_methods, 0);
-    luaL_openlib(L, "gsqlparser", Parser_functions, 0);
+    if(!lua_istable(L, -1)){
+      luaL_error(L,"must table");
+    }
+   
+    luaL_register(L, NULL, Parser_methods);
     return 1;
 }
 
-/* Allocate new Parser object */
+/* 创建对你Pasrer，同时把全局的ParserMetaName函数表设置给它 */
 int Parser_new(lua_State *L){
     int vendor = luaL_checkinteger(L, 1);
     Parser *p = (Parser *)lua_newuserdata(L, sizeof(Parser));
@@ -27,14 +31,16 @@ int Parser_new(lua_State *L){
         luaL_error(L, "gsp_parser_create(vendor=%d) faild.", vendor);
         return 0;
     }
-    printf("Parser_new\n");
+
+    luaL_getmetatable(L, ParserMetaName);
+    lua_setmetatable(L, -2);
     return 1;
 }
 /* Deallocate Parser object */
 int Parser_free(lua_State *L) {
     Parser *p = (Parser *)luaL_checkudata(L, 1, ParserMetaName);
     if (p->_parser != NULL){
-        printf("Parser_free\n");
+    //    printf("Parser_free(gsp_parser_free())\n");
         gsp_parser_free(p->_parser);
         p->_parser = NULL;
     }
@@ -42,7 +48,6 @@ int Parser_free(lua_State *L) {
 }
 
 int Parser_tostring(lua_State *L){
-    printf("Parser_tostring\n");
     Parser *p = (Parser *)luaL_checkudata(L, 1, ParserMetaName);
     lua_pushfstring(L, "%s(vendor=%d)", ParserMetaName, p->vendor);
     return 1;
