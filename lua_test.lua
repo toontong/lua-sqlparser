@@ -5,7 +5,7 @@ print("==== the gsqlparser.so functions list =====")
 dumper.print(parser)
 print("==== end gsqlparser.so funcstion list =====\n")
 
-p = parser.Parser(1)
+p = parser.NewParser(1)
 print("----- new a Pasrer(vendor=1) ---- ")
 dumper.print(p)
 print("----- end a Pasrer() funtions ----\n")

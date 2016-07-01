@@ -277,5 +277,5 @@ SqlNode *Node_parse_list(lua_State *L, gsp_node *node, Statement *stmt);
 typedef SqlNode *(*NodeParseFunc)(lua_State *L, gsp_node *, Statement *);
 static NodeParseFunc Node_parse_functions[MAX_NODE_PARSE_FUNCS];
 
-void _Node_init();
+void Node_init();
 #endif

@@ -8,7 +8,8 @@
 // Initialize this Type
 int Node_register_on_luaopen(lua_State *L) {
     // Fill node parsing functions
-    _Node_init();
+    printf("node reg...\n");
+    //Node_init();
 
     if(0 == luaL_newmetatable(L, NodeMetatable)){
        luaL_error(L, "userdata key already has the key tname");
@@ -338,35 +339,33 @@ SqlNode *Node_FromNode(lua_State *L, gsp_node *node, Statement *stmt) {
 
 
 
-
-/* TODO：foreach怎么玩？先不解释
 SqlNode *Node_parse_list(lua_State *L, gsp_node *node, Statement *stmt)
 {
-    PyObject *list;
     struct gsp_listcell *cell;
 
     // generate new Node object
     SqlNode *obj;
-    obj = (SqlNode*) Node_new(&NodeType, Py_None, Py_None); obj->_node = node;
-
+    obj = (SqlNode*) Node_new(L); obj->_node = node;
+    int i = 0;
     // New list
-    list = PyList_New(0);
+    lua_newtable(L);
     foreach(cell, ((gsp_list*)node)) {
         // generate new Node object from list item
-        PyObject *o;
-        
-        o= Node_FromNode((gsp_node*)cell->node, stmt);
-        // add to list
-        PyList_Append(list, (PyObject*) o);
-        Py_XDECREF(o);
+        SqlNode *o;
+
+        lua_pushinteger(L, i); 
+        i++;
+        o = Node_FromNode(L, (gsp_node*)cell->node, stmt);
+        lua_settable(L, -3);
     }
 
     // Add list to node
-    PyDict_SetItemString(obj->dict, "list", list);
-    Py_XDECREF(list);
+    lua_pushstring(L, "list");
+    lua_insert(L, -2);
+    lua_settable(L, -3); /*mean: table[key] = table{} */
 
-    return (PyObject*) obj;
-}*/
+    return obj;
+}
 
 /// AUTO-GENERATED PARSING FUNCTIONS
 SqlNode *Node_parse_listcell(lua_State *L, gsp_node *node, Statement *stmt) {
@@ -1728,7 +1727,7 @@ void Node_init() {
     int i;
     for (i=0; i<MAX_NODE_PARSE_FUNCS;i++)
         Node_parse_functions[i] = NULL;
-    
+    printf("node init \n");    
     Node_parse_functions[t_gsp_list] = Node_parse_list;
     Node_parse_functions[t_gsp_createTableStatement] = Node_parse_createTableSqlNode;
     Node_parse_functions[t_gsp_insertStatement] = Node_parse_insertSqlNode;
