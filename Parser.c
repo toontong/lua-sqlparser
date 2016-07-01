@@ -79,6 +79,7 @@ int Parser_check_syntax(lua_State *L){
     return 1;
 
 }
+
 int Parser_tokenize(lua_State *L){
     char * token_str;
     struct gsp_sourcetoken *token;
@@ -112,7 +113,37 @@ int Parser_tokenize(lua_State *L){
     return 1;
 }
 
+// get nth statement
+// Parser.get_statement(n)
+int Parser_get_statement(lua_State *L) {
+    int n = -1;
+    gsp_sql_statement *stmt;
+    Statement *statement;
+    Parser *parser = (Parser *)luaL_checkudata(L, 1, ParserMetatable);
+    int n = luaL_checkinteger(L, 2);
+    
 
-int Parser_get_statement(lua_State *L){return 1;}
-int Parser_get_statement_count(lua_State *L){return 1;}
-int Parser_get_tokens(lua_State *L){return 1;}
+    if (parser->_parser == NULL || n < 0 || n >= parser->_parser->nStatement) {
+        luaL_error(L, "get_statement() index out of bounds");
+        return NULL;
+    }
+
+    stmt = &parser->_parser->pStatement[n];
+
+    if (stmt->parseTree == NULL && stmt->stmt == NULL) {
+        // Invalid syntax
+        return 0;
+    }
+    statement = (Statement*) Statement_FromStatement(L, stmt);
+    return statement != NULL ? 1 : 0;
+}
+
+// Parser.get_statement_count()
+int Parser_get_statement_count(lua_State *L){
+    Parser *parser = (Parser *)luaL_checkudata(L, 1, ParserMetatable);
+    if (parser==NULL || parser->_parser == NULL){
+        return 0;
+    }
+    lua_pushnumber(L, (double)parser->_parser->nStatement);
+    return 1;
+}

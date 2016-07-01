@@ -49,6 +49,7 @@ Statement *Statement_FromStatement(lua_State *L, gsp_sql_statement *stmt) {
     if(rc == 1){
         self = (Statement *)lua_gettop(L);
         self->_statement = stmt;
+        lua_pushvalue(L, self);
         return self;
     }
     return NULL;

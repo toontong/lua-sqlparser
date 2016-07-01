@@ -231,7 +231,7 @@ int Node_getattro(lua_State *L)
     }
 
     lua_pushlightuserdata(L, self);
-    
+
     assert(lua_istable(L, -1));
 
     lua_getfield(L, -1, name);
