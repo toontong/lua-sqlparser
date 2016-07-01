@@ -41,7 +41,8 @@ LINK_LIBRARIES(gspcollection gspcore)
 
 target_link_libraries(lua)
 
-SET(LUA_C_MODEL_FILE gsqlparser.c Parser.c ${GSP_DIR}/ext/node_visitor/node_visitor.c
+SET(LUA_C_MODEL_FILE gsqlparser.c Parser.c ENodeType.c Node.c Statement.c
+    ${GSP_DIR}/ext/node_visitor/node_visitor.c
     ${GSP_DIR}/ext/expr_traverse/expr_traverse.c
     ${GSP_DIR}/ext/modifysql/modifysql.c)
 

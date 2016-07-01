@@ -1,4 +1,4 @@
-##ifndef _ENodeType_Header_H
+#ifndef _ENodeType_Header_H
 #define _ENodeType_Header_H 1
 
 #include <stdlib.h>
@@ -7,7 +7,7 @@
 #include "lauxlib.h"
 #include "lualib.h"
 
-void Enum_register_on_luaopen(PyObject *m);
+void Enum_register_on_luaopen(lua_State *L);
 
 void EVendor_init(lua_State *L);
 void EStmtType_init(lua_State *L);

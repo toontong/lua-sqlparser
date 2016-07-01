@@ -11,10 +11,14 @@ dumper.print(p)
 print("----- end a Pasrer() funtions ----\n")
 
 print("---- Parser.__metatable -->")
-dumper.print(getmetatable(p), 1)
+dumper.print(getmetatable(p), 2)
 
 print("---- end Parser.__metatable <--\n")
 
-dumper.print(gsqlparser.Parser)
+query = "select * from tb1 where col1='A';"
+assert(0 == p:check_syntax(query))
+assert(0 ~= (p:check_syntax("error" .. query)))
 
-print(p:tostring())
+dumper.print(p:tokenize(query))
+
+
