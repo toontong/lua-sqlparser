@@ -1,11 +1,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <string.h>
+#include <assert.h>
 
 #include <lauxlib.h>
 #include <lualib.h>
 
 #include "Parser.h"
+#include "stack_debug.h"
+#include "Statement.h"
 
 #include "node_visitor.h"
 #include "gsp_base.h"
@@ -42,6 +45,7 @@ int Parser_new(lua_State *L){
         luaL_error(L, "gsp_parser_create(vendor=%d) faild.", vendor);
         return 0;
     }
+    assert(lua_isuserdata (L, -1));
 
     luaL_getmetatable(L, ParserMetatable);
     lua_setmetatable(L, -2);
@@ -108,7 +112,7 @@ int Parser_tokenize(lua_State *L){
         }
         lua_pushstring(L, token_str);
         free(token_str);
-        lua_rawseti (L, -2, i);
+        lua_rawseti (L, -2, i+1);
     }
     return 1;
 }
@@ -120,21 +124,20 @@ int Parser_get_statement(lua_State *L) {
     gsp_sql_statement *stmt;
     Statement *statement;
     Parser *parser = (Parser *)luaL_checkudata(L, 1, ParserMetatable);
-    int n = luaL_checkinteger(L, 2);
-    
+    n = luaL_checkinteger(L, 2);
 
     if (parser->_parser == NULL || n < 0 || n >= parser->_parser->nStatement) {
         luaL_error(L, "get_statement() index out of bounds");
-        return NULL;
+        return 0;
     }
 
     stmt = &parser->_parser->pStatement[n];
-
+    
     if (stmt->parseTree == NULL && stmt->stmt == NULL) {
-        // Invalid syntax
+        luaL_error(L, "Invalid syntax");
         return 0;
     }
-    statement = (Statement*) Statement_FromStatement(L, stmt);
+    Statement_FromStatement(L, stmt);
     return statement != NULL ? 1 : 0;
 }
 

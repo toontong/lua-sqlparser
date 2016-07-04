@@ -4,12 +4,14 @@
 #include "modifysql.h"
 
 #include <assert.h>
+#include "stack_debug.h"
+#include "log.h"
+
 
 // Initialize this Type
 int Node_register_on_luaopen(lua_State *L) {
     // Fill node parsing functions
-    printf("node reg...\n");
-    //Node_init();
+    Node_init();
 
     if(0 == luaL_newmetatable(L, NodeMetatable)){
        luaL_error(L, "userdata key already has the key tname");
@@ -25,72 +27,81 @@ int Node_register_on_luaopen(lua_State *L) {
     return 1;
 }
 
-/*char* gsp_getNodeText( gsp_node* node )
+// create a SqlNode onto the stack top and return it
+SqlNode *Node_new(lua_State *L)
 {
-    gsp_sourcetoken* startToken = NULL;
-    gsp_sourcetoken* endToken = NULL;
-    gsp_sourcetoken* currentToken = NULL;
-    CString* content;
-    char* rc; 
-
-    if(node == NULL)
+    SqlNode *self = (SqlNode *)lua_newuserdata(L, sizeof(SqlNode));
+    if (self == NULL) {
+        luaL_error(L, "new Node() faild.");
         return NULL;
-    if (node->nodeType == t_gsp_list)
-    {
-        if(((gsp_list*)node)->length>0){
-            startToken = (gsp_list_first((gsp_list *)node))->fragment.startToken;
-            endToken = (gsp_list_last((gsp_list *)node))->fragment.endToken;
+    }
+    self->_node = NULL;
+    self->_parser = NULL;
+
+    lua_newtable(L);
+    lua_pushcfunction(L, Node_dealloc);
+    lua_setfield(L, -2, "__gc");
+   
+    lua_pushcfunction(L, Node_get_text);
+    lua_setfield(L, -2, "get_text");
+
+    lua_pushcfunction(L, Node_get_position);
+    lua_setfield(L, -2, "get_position");
+    
+    lua_pushcfunction(L, Node_tostring);
+    lua_setfield(L, -2, "__tostring");
+    
+    lua_pushstring(L, "__index");
+    lua_pushvalue(L, -2);    /* pushes the metatable */
+    lua_settable(L, -3); /* metatable.__index = metatable */
+//    luaL_getmetatable(L, NodeMetatable);
+
+    return self;
+}
+
+SqlNode *Node_FromNode(lua_State *L, gsp_node *node, Statement *stmt) {
+    // PyObject *self;
+    SqlNode *self;
+
+    // SqlNode *self = (SqlNode *)luaL_checkudata(L, 1, NodeMetatable);
+    // if (self == NULL){
+    //  luaL_error(L, "`%s` expected", NodeMetatable)
+    //  return 0;
+    // 
+    int rc = -1;
+    if (Node_parse_functions[node->nodeType] != NULL) {
+        self = Node_parse_functions[node->nodeType](L, node, stmt);
+        
+        if (self == NULL){
+            luaL_error(L, "`%s` expected", NodeMetatable);
+            return 0;
         }
-
-    }else{
-        startToken = node->fragment.startToken;
-        endToken = node->fragment.endToken;
-    }
-
-    currentToken = startToken;
-    if(currentToken == NULL)
-        return NULL;
-
-
-    while( startToken!=NULL && startToken!=endToken && startToken->tokenStatus == ets_deleted){
-        startToken = startToken->pNext;
-    }
-
-    if(startToken == NULL || startToken->tokenStatus == ets_deleted){
-        startToken = NULL;
-        endToken = NULL;
-        return NULL;
-    }
-    else{
-        while(endToken!=NULL && endToken!=startToken && endToken->tokenStatus == ets_deleted){
-            endToken = endToken->pPrev;
+        Node_set_attr_n(L,"node_type", node->nodeType);
+        if (node->nodeType == t_gsp_list) {
+            //Debug("no heandl of nodeType=t_gsp_list");
+            /*name = PyString_FromString("LIST");
+            PyDict_SetItemString(((SqlNode*)self)->dict, "node_text", name);
+            Py_XDECREF(name);*/
+        } else {
+            /*tmp = gsp_getNodeText(node);
+            name = PyString_FromString(tmp);
+            gsp_free(tmp);
+            PyDict_SetItemString(((SqlNode*)self)->dict, "node_text", name);
+            Py_XDECREF(name);*/
         }
-
-        if(endToken == NULL || endToken->tokenStatus == ets_deleted){
-            startToken = NULL;
-            endToken = NULL;
+    } else {
+        Debug("NO PARSER FOR NODE TYPE: %d\n", node->nodeType);
+        self = Node_new(L);
+        if(self == NULL)
             return NULL;
-        }
 
-        content = CStringNew();
-
-        if(currentToken->tokenStatus!=ets_deleted)
-            CStringNAppend(content, currentToken->pStr, currentToken->nStrLen);
-
-        while(currentToken != endToken && currentToken->pNext!=NULL){
-            currentToken = currentToken->pNext;
-            if(currentToken->tokenStatus!=ets_deleted)
-                CStringNAppend(content, currentToken->pStr, currentToken->nStrLen);
-            if(currentToken == endToken)
-                break;
-        }
-
-        rc = content->buffer;
-        CStringDeleteWithoutBuffer(content);
-        return rc;
+        Node_set_attr_n(L,"node_type", node->nodeType);
     }
-}*/
 
+    self->_parser = stmt->_statement->sqlparser;
+    lua_setmetatable(L, -2);
+    return self;
+}
 char* gsp_getSimpleNodeText(gsp_node* node, gsp_sqlparser *parser)
 {
     gsp_sourcetoken* startToken = NULL;
@@ -117,7 +128,6 @@ char* gsp_getSimpleNodeText(gsp_node* node, gsp_sqlparser *parser)
     currentToken = startToken;
     if (currentToken == NULL)
         return NULL;
-
 
     while (startToken != NULL && startToken != endToken && startToken->tokenStatus == ets_deleted){
         startToken = startToken->pNext;
@@ -154,8 +164,7 @@ char* gsp_getSimpleNodeText(gsp_node* node, gsp_sqlparser *parser)
             len = stop - start;
         }
 
-
-        //printf("%d, %d, %d\n", start, stop, len);
+        //Debug("%d, %d, %d\n", start, stop, len);
 
         CStringNAppend(content, parser->sqltext + start, len);
 
@@ -168,7 +177,8 @@ char* gsp_getSimpleNodeText(gsp_node* node, gsp_sqlparser *parser)
 int Node_get_text(lua_State *L)
 {
     char *tmp;
-    SqlNode *self = (SqlNode *)luaL_checkudata(L, 1, NodeMetatable);
+//    SqlNode *self = (SqlNode *)luaL_checkudata(L, 1, NodeMetatable);
+    SqlNode *self = (SqlNode *)lua_touserdata(L, 1);
     //tmp = gsp_getNodeText(self->_node);
     tmp = gsp_getSimpleNodeText(self->_node, self->_parser);
     if (tmp == NULL) {
@@ -245,99 +255,62 @@ int Node_set_attr_n(lua_State *L, const char* attr, int v)
     lua_settable(L, -3); /*mean: table[key] = value */
 }
 
+int Node_tostring(lua_State *L){
+    SqlNode *n = (SqlNode *)lua_touserdata(L, 1);
+    lua_pushfstring(L, "Node(self=%d, typ=%d)",  n, n->_node->nodeType);
+    return 1;
+}
+
 int Node_dealloc(lua_State *L)
 {
-    SqlNode *p = (SqlNode *)luaL_checkudata(L, 1, NodeMetatable);
+    SqlNode *p = (SqlNode *)lua_touserdata(L, 1);
+    //SqlNode *p = (SqlNode *)luaL_checkudata(L, 1, NodeMetatable);
     if (p == NULL){
         luaL_error(L, "`%s` expected", NodeMetatable);
         return 0;
     }
+    return 1;
     if (p->_node != NULL){
-        printf("TODO: free the Node->_node\n");
+        // Debug("TODO: free the Node->_node\n");
     }
     if (p->_parser != NULL){
-        printf("TODO: free the Node->_parser\n");
+        // Debug("TODO: free the Node->_parser\n");
     }
     return 1;
 }
-// create a SqlNode onto the stack top and return it
-SqlNode *Node_new(lua_State *L)
-{
-    SqlNode *self = (SqlNode *)lua_newuserdata(L, sizeof(SqlNode));
-    if (self == NULL) {
-        luaL_error(L, "new Node() faild.");
-        return NULL;
-    }
-    self->_node = NULL;
-    self->_parser = NULL;
-    luaL_getmetatable(L, NodeMetatable);
-    lua_setmetatable(L, -2);
-    // assert((SqlNode *)lua_gettop(L) == self);
-    return self;
-}
 
-SqlNode *Node_FromNode(lua_State *L, gsp_node *node, Statement *stmt) {
-    // PyObject *self;
-    SqlNode *self;
 
-    // SqlNode *self = (SqlNode *)luaL_checkudata(L, 1, NodeMetatable);
-    // if (self == NULL){
-    //  luaL_error(L, "`%s` expected", NodeMetatable)
-    //  return 0;
-    // }
-    printf("Node_FromNode(%d) : %p\n", node->nodeType, node);
-    if (Node_parse_functions[node->nodeType] != NULL) {
-        self = Node_parse_functions[node->nodeType](L, node, stmt);
-        if (self == NULL){
-            luaL_error(L, "`%s` expected", NodeMetatable);
-            return 0;
-        }
 
-            lua_getmetatable(L, -1); // push metatable of self onto the stack top.
-            Node_set_attr_n(L,"node_type", node->nodeType);
-            // SqlNode *p = (SqlNode *)lua_gettop(L); // pop self?
-            //assert(p == self);
-            if (node->nodeType == t_gsp_list) {
-                /*name = PyString_FromString("LIST");
-                PyDict_SetItemString(((SqlNode*)self)->dict, "node_text", name);
-                Py_XDECREF(name);*/
-            } else {
-                /*tmp = gsp_getNodeText(node);
-                name = PyString_FromString(tmp);
-                gsp_free(tmp);
-                PyDict_SetItemString(((SqlNode*)self)->dict, "node_text", name);
-                Py_XDECREF(name);*/
-            }
-    } else {
-        printf("NO PARSER FOR NODE TYPE: %d\n", node->nodeType);
-        self = Node_new(L);
-        if(self == NULL)
-            return NULL;
-
-        lua_getmetatable(L, -1); // push metatable of self onto the stack top.
-        Node_set_attr_n(L,"node_type", node->nodeType);
+#define ADD_TOKEN(L, path, name) \
+    if (path->name) {\
+        lua_pushstring(L, #name); \
+        lua_pushlstring(L, path->name->pStr, path->name->nStrLen); \
+        lua_settable(L, -3);\
+    } else {\
+        lua_pushstring(L, #name); \
+        lua_pushnil(L);\
+        lua_settable(L, -3); \
     }
 
-    printf("Node_FromNode: %p %p\n", stmt->_statement, stmt->_statement->sqlparser);
-    self->_parser = stmt->_statement->sqlparser;
-    return self;
-}
+#define ADD_INT(L, path, name)\
+    if (true) {\
+        lua_pushstring(L, #name); \
+        lua_pushinteger(L, path->name); \
+        lua_settable(L, -3); \
+    }
 
-
-
-#define ADD_TOKEN(L, path, name) if (path->name) { lua_getmetatable(L, -1); lua_pushstring(L, #name); lua_pushlstring(L, path->name->pStr, path->name->nStrLen); lua_settable(L, -3);} else {lua_getmetatable(L, -1); lua_pushstring(L, #name); lua_pushnil(L);lua_settable(L, -3); }
-
-#define ADD_INT(L, path, name) if (true) {lua_getmetatable(L, -1); lua_pushstring(L, #name); lua_pushinteger(L, path->name);lua_settable(L, -3); }
-#define ADD_NODE(L, path, name) if (path->name) { lua_getmetatable(L, -1);lua_pushstring(L, #name);SqlNode *o = Node_FromNode(L, (gsp_node*)path->name, stmt); lua_settable(L, -3); } else {lua_getmetatable(L, -1); lua_pushstring(L, #name);lua_pushnil(L); lua_settable(L, -3); }
+#define ADD_NODE(L, path, name) \
+    if (path->name) { \
+        lua_pushstring(L, #name);\
+        SqlNode *o = Node_FromNode(L, (gsp_node*)path->name, stmt); \
+        lua_settable(L, -3); \
+    } else {\
+        lua_pushstring(L, #name);\
+        lua_pushnil(L); \
+        lua_settable(L, -3); \
+    }
 
 // #define ADD_LIST(d, path, name) if (path->name) { PyObject *o = Node_parsepath->name; PyDict_SetItemString(d, #name, o); Py_XDECREF(o); } else { PyDict_SetItemString(d, #name, Py_None); } 
-
-
-
-
-
-
-
 
 SqlNode *Node_parse_list(lua_State *L, gsp_node *node, Statement *stmt)
 {
@@ -374,7 +347,9 @@ SqlNode *Node_parse_listcell(lua_State *L, gsp_node *node, Statement *stmt) {
     return obj;
 }
 SqlNode *Node_parse_sql_statement(lua_State *L, gsp_node *node, Statement *stmt) {
-    SqlNode *obj = Node_new(L); obj->_node = node;  ADD_INT(L, ((gsp_sql_statement*)node), stmtType);
+    SqlNode *obj = Node_new(L); 
+    obj->_node = node;  
+    ADD_INT(L, ((gsp_sql_statement*)node), stmtType);
     ADD_NODE(L, ((gsp_sql_statement*)node), parseTree);
     ADD_INT(L, ((gsp_sql_statement*)node), start_token_pos);
     ADD_INT(L, ((gsp_sql_statement*)node), end_token_pos);
@@ -948,7 +923,9 @@ SqlNode *Node_parse_valueRowItem(lua_State *L, gsp_node *node, Statement *stmt) 
     return obj;
 }
 SqlNode *Node_parse_selectSqlNode(lua_State *L, gsp_node *node, Statement *stmt) {
-    SqlNode *obj = Node_new(L); obj->_node = node;  ADD_INT(L, ((gsp_selectSqlNode*)node), setOperator);
+    SqlNode *obj = Node_new(L); 
+    obj->_node = node;  
+    ADD_INT(L, ((gsp_selectSqlNode*)node), setOperator);
     ADD_NODE(L, ((gsp_selectSqlNode*)node), cteList);
     ADD_NODE(L, ((gsp_selectSqlNode*)node), valueClause);
     ADD_TOKEN(L, ((gsp_selectSqlNode*)node), selectToken);
@@ -1727,7 +1704,7 @@ void Node_init() {
     int i;
     for (i=0; i<MAX_NODE_PARSE_FUNCS;i++)
         Node_parse_functions[i] = NULL;
-    printf("node init \n");    
+    
     Node_parse_functions[t_gsp_list] = Node_parse_list;
     Node_parse_functions[t_gsp_createTableStatement] = Node_parse_createTableSqlNode;
     Node_parse_functions[t_gsp_insertStatement] = Node_parse_insertSqlNode;

@@ -7,24 +7,29 @@
 
 #define _GSQL_MODEL_NAME "gsqlparser"
 
+int new_node(lua_State *L){
+   Node_new(L);
+   lua_setmetatable(L, -2);
+   return 1;
+}
+
 static const struct luaL_Reg gsqlparser_module_functions[] = {
     {"NewParser",          Parser_new},
-    // {"NewNode",            Node_new},
+    //{"NewNode",            new_node},
     // {"NewStatement",       Statement_new},
     {NULL, NULL}
 };
 
 int luaopen_gsqlparser(lua_State *L) {
-    printf("luaopen\n");
-    
-    Parser_register_on_luaopen(L);
-    
     Node_register_on_luaopen(L);
     
     Statement_register_on_luaopen(L);
 
-    Enum_register_on_luaopen(L);
-
+    Parser_register_on_luaopen(L);
+        
     luaL_register(L, _GSQL_MODEL_NAME, gsqlparser_module_functions);
+   
+    Enum_register_on_luaopen(L);
+    
     return 1;
 }

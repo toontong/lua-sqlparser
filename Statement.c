@@ -1,8 +1,7 @@
 #include "Statement.h"
 #include "Node.h"
 #include "modifysql.h"
-
-static const char* StatementMetatable = "gsqlparser.Statement";
+#include "log.h"
 
 // Initialize Statement Type module
 int Statement_register_on_luaopen(lua_State *L){
@@ -20,39 +19,14 @@ int Statement_register_on_luaopen(lua_State *L){
     return 1;
 }
 
-int Statement_new(lua_State *L)
-{
-    Statement *self = (Statement *)lua_newuserdata(L, sizeof(Statement));
-
-    if (self != NULL) {
-        luaL_error(L,"new userdata of{%s} fail.", StatementMetatable);
-        return 0;
-    }
-    self->_statement = NULL;
-    luaL_getmetatable(L, StatementMetatable);
-    lua_setmetatable(L, -2);
-    return 1;
-}
 
 int Statement_dealloc(lua_State *L)
 {   
     Statement *self = (Statement *)luaL_checkudata(L, 1, StatementMetatable);
     if(self && self->_statement != NULL){
-        printf("free(self._statement) ???\n");
+        // Debug("free(self._statement) ???\n");
     }
     return 0;
-}
-
-Statement *Statement_FromStatement(lua_State *L, gsp_sql_statement *stmt) {
-    Statement *self;
-    int rc = Statement_new(L);
-    if(rc == 1){
-        self = (Statement *)lua_gettop(L);
-        self->_statement = stmt;
-        lua_pushvalue(L, self);
-        return self;
-    }
-    return NULL;
 }
 
 // Get root node
@@ -61,7 +35,7 @@ int Statement_get_root(lua_State *L)
 {
     SqlNode *n;
     Statement *self = (Statement*) luaL_checkudata(L, 1, StatementMetatable);
-    //printf("Statement_get_root\n");
+    //Debug("Statement_get_root\n");
     if (self == NULL || self->_statement == NULL || self->_statement->stmt == NULL) {
         luaL_error(L, "Empty statement.");
         return 0;
@@ -69,11 +43,13 @@ int Statement_get_root(lua_State *L)
 
     //n = (SqlNode*) Node_FromNode( ((Statement*)self)->_statement->parseTree, (Statement*) self );
     n = Node_FromNode(L, (gsp_node*) ((Statement*)self)->_statement->stmt, (Statement*) self );
+    
     if (n == NULL){
         luaL_error(L, "Empty Node.");
         return 0;
     }
 
+    assert(lua_isuserdata(L, 1));
     return 1;
 }
 
@@ -91,7 +67,6 @@ int Statement_remove_whereclause(lua_State *L)
 
     gsp_removeWhereClause((gsp_base_statement*) ((SqlNode*)node)->_node);
     newNode = Node_FromNode(L, ((SqlNode*)node)->_node, (Statement*) self);
-
     return NULL == newNode ? 1 : 0;
 }
 
@@ -261,10 +236,10 @@ int Statement_add_whereclause(lua_State *L)
         return NULL;
     }
 
-    //printf("add_whereclause: %s\n", text);
-    //printf("old: %s\n", gsp_getNodeText( (gsp_node*) ((Statement*)self)->_statement->stmt));
+    //Debug("add_whereclause: %s\n", text);
+    //Debug("old: %s\n", gsp_getNodeText( (gsp_node*) ((Statement*)self)->_statement->stmt));
     gsp_addWhereClause( ((Statement*)self)->_statement->sqlparser, (gsp_base_statement*) ((SqlNode*)node)->_node, text);
-    //printf("new: %s\n", gsp_getNodeText( (gsp_node*) ((Statement*)self)->_statement->stmt));
+    //Debug("new: %s\n", gsp_getNodeText( (gsp_node*) ((Statement*)self)->_statement->stmt));
 
     newQuery = gsp_getNodeText( (gsp_node*) ((Statement*)self)->_statement->stmt );
     if(newQuery != NULL){

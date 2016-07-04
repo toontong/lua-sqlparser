@@ -27,6 +27,7 @@ endif()
 SET(INSTALL_CMOD share/lua/cmod CACHE PATH "Directory to install Lua binary modules (configure lua via LUA_CPATH)")
 SET(GSP_DIR ${CMAKE_SOURCE_DIR}/general_sql_parser)
 
+INCLUDE_DIRECTORIES(. "/usr/local/include")
 
 INCLUDE_DIRECTORIES(. ${GSP_DIR}/core/)
 INCLUDE_DIRECTORIES(. ${GSP_DIR}/ext/collection/includes/)
@@ -39,14 +40,16 @@ AUX_SOURCE_DIRECTORY(. ${CMAKE_SOURCE_DIR})
 LINK_DIRECTORIES(${GSP_DIR}/lib)
 LINK_LIBRARIES(gspcollection gspcore)
 
-target_link_libraries(lua)
-
 SET(LUA_C_MODEL_FILE gsqlparser.c Parser.c ENodeType.c Node.c Statement.c
+        log.c
     ${GSP_DIR}/ext/node_visitor/node_visitor.c
     ${GSP_DIR}/ext/expr_traverse/expr_traverse.c
     ${GSP_DIR}/ext/modifysql/modifysql.c)
 
 INCLUDE_DIRECTORIES((${CMAKE_SOURCE_DIR}/include/ ${LUA_INCLUDE_DIR}))
+
+ADD_EXECUTABLE(test test.c)
+TARGET_LINK_LIBRARIES(test lua m)
 
 ADD_LIBRARY(lua_cmod_sql_parser MODULE
     ${LUA_C_MODEL_FILE} )

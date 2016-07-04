@@ -10,6 +10,8 @@
 #include "lauxlib.h"
 #include "lualib.h"
 
+static const char* StatementMetatable = "gsqlparser.Statement";
+
 // Statement object of lua-userdata
 typedef struct {
     gsp_sql_statement *_statement;
@@ -19,10 +21,23 @@ typedef struct {
 int Statement_register_on_luaopen(lua_State *L);
 
 // C utils methods
-Statement *Statement_FromStatement(lua_State *L, gsp_sql_statement *stmt);
+#define Statement_New(L)\
+   if(L){\
+          Statement *self = (Statement *)lua_newuserdata(L, sizeof(Statement));\
+          self->_statement = NULL;\
+          luaL_getmetatable(L, StatementMetatable);\
+          lua_setmetatable(L, -2);\
+   }
+
+#define Statement_FromStatement(L, stmt)\
+   if(L){\
+           Statement *self = (Statement *)lua_newuserdata(L, sizeof(Statement));\
+           self->_statement = stmt;\
+           luaL_getmetatable(L, StatementMetatable);\
+           lua_setmetatable(L, -2);\
+   }
 
 // Lua export Module methods
-int Statement_new(lua_State *L);
 int Statement_dealloc(lua_State *L);
 
 

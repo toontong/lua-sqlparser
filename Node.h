@@ -23,6 +23,7 @@ typedef struct {
 int Node_register_on_luaopen(lua_State *L);
 
 // C utils methods
+SqlNode *Node_new(lua_State *L);
 SqlNode *Node_FromNode(lua_State *L, gsp_node *node, Statement *stmt);
 int Node_getattro(lua_State *L);
 int Node_set_attr_n(lua_State *L, const char* attr, int v);
@@ -36,11 +37,13 @@ SqlNode *Node_new(lua_State *L);
 int Node_dealloc(lua_State *L);
 int Node_get_text(lua_State *L);
 int Node_get_position(lua_State *L);
+int Node_tostring(lua_State *L);
 
 
 // Lua export Object methods metatable
 static const struct luaL_Reg Node_methods_metatable[] = {
     {"__gc",           Node_dealloc},
+    {"__tostring",     Node_tostring},
     {"get_text",       Node_get_text}, // "get_text()\nGets the string representation of the node.\n\n:returns: str" },
     {"get_position",   Node_get_position}, // "get_position()\nGets the node's position in the query.\n\n:returns: tuple" },
     {NULL, NULL}  /* Sentinel */
