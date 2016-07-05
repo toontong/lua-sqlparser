@@ -48,8 +48,8 @@ SET(LUA_C_MODEL_FILE gsqlparser.c Parser.c ENodeType.c Node.c Statement.c
 
 INCLUDE_DIRECTORIES((${CMAKE_SOURCE_DIR}/include/ ${LUA_INCLUDE_DIR}))
 
-ADD_EXECUTABLE(test test.c)
-TARGET_LINK_LIBRARIES(test lua m)
+ADD_EXECUTABLE(ctest test.c)
+TARGET_LINK_LIBRARIES(ctest lua m)
 
 ADD_LIBRARY(lua_cmod_sql_parser MODULE
     ${LUA_C_MODEL_FILE} )
