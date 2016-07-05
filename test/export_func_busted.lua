@@ -13,6 +13,7 @@ describe("Base export functions and Enums", function()
             assert.are.equal(type(sqlparser.ECreateType), "table")
             assert.are.equal(type(sqlparser.EExecType), "table")
             assert.are.equal(type(sqlparser.EVendor), "table")
+            assert.are.equal(type(sqlparser.ENodeType), "table")
         
             query = "SELECT a, b FROM table_1 WHERE c > 20"
             assert.True(0 == p:check_syntax(query))
