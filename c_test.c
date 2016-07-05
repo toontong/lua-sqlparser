@@ -12,8 +12,8 @@
    }
 
 #define Debug(fmt, ...) _log(LOG_DEBUG, fmt, __VA_ARGS__);
-    
-    
+   
+
 
 /*copy a table of the index on the stack */
 void t_shallow_copy(lua_State* L, int index) {

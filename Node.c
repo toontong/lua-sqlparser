@@ -188,7 +188,7 @@ int Node_get_text(lua_State *L)
 
 int Node_get_position(lua_State *L)
 {
-    SqlNode *self = (SqlNode *)luaL_checkudata(L, 1, NodeMetatable);
+    SqlNode *self = (SqlNode *)lua_touserdata(L, 1);
     if (self == NULL){
         luaL_error(L, "`%s` expected", NodeMetatable);
         return 0;
@@ -198,11 +198,11 @@ int Node_get_position(lua_State *L)
         char *name;
 
         name = gsp_getSimpleNodeText(self->_node, self->_parser);
-
+        
         if (name == NULL) {
             return 0;
         }
-
+        
         lua_pushinteger(L, self->_node->fragment.startToken->nColumn);
         lua_pushlstring(L, name, strlen(name));
         gsp_free(name);
@@ -226,7 +226,7 @@ SqlNode *Node_list_iterator(PyObject *o) {
 
 int Node_getattro(lua_State *L)
 {
-    SqlNode *self = (SqlNode *)luaL_checkudata(L, 1, NodeMetatable);
+    SqlNode *self = (SqlNode *)lua_touserdata(L, 1);
     if (self == NULL){
         luaL_error(L, "`%s` expected", NodeMetatable);
         return 0;

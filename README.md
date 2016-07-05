@@ -24,7 +24,7 @@ assert(parser.check_syntax(query) == 0)
 -- Get first statement from the query
 stmt = parser.get_statement(0)
 
-assert(stmt:get_stmttype() == sqlparser.EStmtType.sstselect)
+assert(stmt:get_stmttype() == sqlparser.EStmtType.select)
 
 node = stmt:get_root()
 
