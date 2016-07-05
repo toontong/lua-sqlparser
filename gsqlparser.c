@@ -9,13 +9,15 @@
 
 int new_node(lua_State *L){
    Node_new(L);
+   lua_pop(L, 1);
+   luaL_getmetatable(L, NodeMetatable);
    lua_setmetatable(L, -2);
    return 1;
 }
 
 static const struct luaL_Reg gsqlparser_module_functions[] = {
     {"NewParser",          Parser_new},
-    //{"NewNode",            new_node},
+    {"NewNode",            new_node},
     // {"NewStatement",       Statement_new},
     {NULL, NULL}
 };

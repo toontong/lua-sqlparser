@@ -53,6 +53,16 @@ int Statement_get_root(lua_State *L)
     return 1;
 }
 
+int Statement_get_stmttype(lua_State *L){
+    Statement *self = (Statement*) luaL_checkudata(L, 1, StatementMetatable);
+    if (self == NULL || self->_statement == NULL || self->_statement->stmt == NULL) {
+        luaL_error(L, "Empty statement.");
+        return 0;
+    }
+    lua_pushnumber(L, (double)self->_statement->stmtType);
+    return 1;
+}
+
 // Statement.remove_whereclause(node)
 int Statement_remove_whereclause(lua_State *L) 
 {

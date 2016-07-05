@@ -47,6 +47,7 @@ int Statement_iterate_node_next(lua_State *L);
 */
 
 // Lua export Object methods
+int Statement_get_stmttype(lua_State *L);
 int Statement_get_root(lua_State *L);
 int Statement_remove_whereclause(lua_State *L);
 int Statement_remove_orderby(lua_State *L);
@@ -67,6 +68,7 @@ int Statement_add_resultcolumn(lua_State *L);
 // Lua export Object methods metatable
 static const struct luaL_Reg Statement_methods_metatable[] = {
     {"__gc",                   Statement_dealloc},
+    {"get_stmttype",           Statement_get_stmttype},
     {"get_root",               Statement_get_root}, // "get_root()\nGets the root :class:`Node` of the statement.\n\n:returns: :class:`Node`" },
     {"remove_whereclause",     Statement_remove_whereclause}, // "remove_whereclause(node)\nRemoves *node*'s Where clause (if it exists)\n\n:param node: A select statement Node\n:type node: :class:`Node`\n:returns: :class:`Node` -- The updated version of the *node*" },
     {"remove_orderby",         Statement_remove_orderby}, // "remove_orderby(node)\nRemoves *node*'s OrderBy clause (if it exists)\n\n:param node: A select statement Node\n:type node: :class:`Node`\n:returns: :class:`Node` -- The updated version of the *node*" },
