@@ -11,7 +11,7 @@
 #include "lauxlib.h"
 #include "lualib.h"
 
-static const char* NodeMetatable = "gsqlparser.Node";
+static const char* NodeMetatable = "sqlparser.Node";
 
 // Node object
 typedef struct {

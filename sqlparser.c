@@ -5,7 +5,7 @@
 
 #include "lua.h"
 
-#define _GSQL_MODEL_NAME "gsqlparser"
+#define _GSQL_MODEL_NAME "sqlparser"
 
 int new_node(lua_State *L){
    Node_new(L);
@@ -15,21 +15,21 @@ int new_node(lua_State *L){
    return 1;
 }
 
-static const struct luaL_Reg gsqlparser_module_functions[] = {
+static const struct luaL_Reg sqlparser_module_functions[] = {
     {"NewParser",          Parser_new},
     {"NewNode",            new_node},
     // {"NewStatement",       Statement_new},
     {NULL, NULL}
 };
 
-int luaopen_gsqlparser(lua_State *L) {
+int luaopen_sqlparser(lua_State *L) {
     Node_register_on_luaopen(L);
     
     Statement_register_on_luaopen(L);
 
     Parser_register_on_luaopen(L);
         
-    luaL_register(L, _GSQL_MODEL_NAME, gsqlparser_module_functions);
+    luaL_register(L, _GSQL_MODEL_NAME, sqlparser_module_functions);
    
     Enum_register_on_luaopen(L);
     

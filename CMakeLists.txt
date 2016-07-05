@@ -1,6 +1,6 @@
 CMAKE_MINIMUM_REQUIRED (VERSION 2.6)
 
-PROJECT(gsqlparser)
+PROJECT(sqlparser)
 
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -g -fPIC")
 SET(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -O0 -g -fPIC")
@@ -40,7 +40,7 @@ AUX_SOURCE_DIRECTORY(. ${CMAKE_SOURCE_DIR})
 LINK_DIRECTORIES(${GSP_DIR}/lib)
 LINK_LIBRARIES(gspcollection gspcore)
 
-SET(LUA_C_MODEL_FILE gsqlparser.c Parser.c ENodeType.c Node.c Statement.c
+SET(LUA_C_MODEL_FILE sqlparser.c Parser.c ENodeType.c Node.c Statement.c
         log.c
     ${GSP_DIR}/ext/node_visitor/node_visitor.c
     ${GSP_DIR}/ext/expr_traverse/expr_traverse.c
@@ -48,11 +48,11 @@ SET(LUA_C_MODEL_FILE gsqlparser.c Parser.c ENodeType.c Node.c Statement.c
 
 INCLUDE_DIRECTORIES((${CMAKE_SOURCE_DIR}/include/ ${LUA_INCLUDE_DIR}))
 
-ADD_EXECUTABLE(ctest test.c)
+ADD_EXECUTABLE(ctest c_test.c)
 TARGET_LINK_LIBRARIES(ctest lua m)
 
 ADD_LIBRARY(lua_cmod_sql_parser MODULE
     ${LUA_C_MODEL_FILE} )
 SET_TARGET_PROPERTIES(lua_cmod_sql_parser PROPERTIES PREFIX "")
-SET_TARGET_PROPERTIES(lua_cmod_sql_parser PROPERTIES OUTPUT_NAME "gsqlparser")
-# / build gsqlparser.so
+SET_TARGET_PROPERTIES(lua_cmod_sql_parser PROPERTIES OUTPUT_NAME "sqlparser")
+# / build sqlparser.so

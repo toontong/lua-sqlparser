@@ -26,7 +26,7 @@ int Parser_get_statement(lua_State *L);
 int Parser_get_statement_count(lua_State *L);
 int Parser_tostring(lua_State *L);
 
-static const struct luaL_Reg Parser_metatable[] = {
+static const struct luaL_Reg Parser_object_metatable[] = {
     {"__tostring",              Parser_tostring},
     {"__gc",                    Parser_free},
     {"check_syntax",            Parser_check_syntax},

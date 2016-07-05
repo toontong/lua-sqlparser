@@ -17,7 +17,7 @@
 #include "gsp_sourcetoken.h"
 #include "gsp_sqlparser.h"
 
-static const char* ParserMetatable = "gsqlparser.Parser";
+static const char* ParserMetatable = "sqlparser.Parser";
 
 /* 建仓一个名为ParserMetatable的全局table变量,填充Parser_methods函数表 */
 int Parser_register_on_luaopen(lua_State *L){
@@ -32,7 +32,7 @@ int Parser_register_on_luaopen(lua_State *L){
       luaL_error(L,"must table");
     }
    
-    luaL_register(L, NULL, Parser_metatable);
+    luaL_register(L, NULL, Parser_object_metatable);
     return 1;
 }
 

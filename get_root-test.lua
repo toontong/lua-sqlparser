@@ -1,5 +1,5 @@
 dumper = require ("tbdumper")
-parser = require("gsqlparser")
+parser = require("sqlparser")
 p = parser.NewParser(2)
 query = "select * from tb1 where col1='A';"
 assert(0 == p:check_syntax(query))

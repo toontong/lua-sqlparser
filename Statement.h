@@ -10,7 +10,7 @@
 #include "lauxlib.h"
 #include "lualib.h"
 
-static const char* StatementMetatable = "gsqlparser.Statement";
+static const char* StatementMetatable = "sqlparser.Statement";
 
 // Statement object of lua-userdata
 typedef struct {

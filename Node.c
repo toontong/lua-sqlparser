@@ -311,8 +311,6 @@ int Node_dealloc(lua_State *L)
         lua_settable(L, -3); \
     }
 
-// #define ADD_LIST(d, path, name) if (path->name) { PyObject *o = Node_parsepath->name; PyDict_SetItemString(d, #name, o); Py_XDECREF(o); } else { PyDict_SetItemString(d, #name, Py_None); } 
-
 SqlNode *Node_parse_list(lua_State *L, gsp_node *node, Statement *stmt)
 {
     struct gsp_listcell *cell;
@@ -348,7 +346,6 @@ SqlNode *Node_parse_listcell(lua_State *L, gsp_node *node, Statement *stmt) {
     return obj;
 }
 SqlNode *Node_parse_sql_statement(lua_State *L, gsp_node *node, Statement *stmt) {
-    printf("set Node_parse_sql_statement type\n");
     SqlNode *obj = Node_new(L); 
     obj->_node = node;  
     ADD_INT(L, ((gsp_sql_statement*)node), stmtType);

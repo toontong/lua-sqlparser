@@ -1,9 +1,9 @@
 dumper = require ("tbdumper")
-parser = require("gsqlparser")
+parser = require("sqlparser")
 
-print("==== the gsqlparser.so functions list =====")
+print("==== the sqlparser.so functions list =====")
 dumper.print(parser, 1)
-print("==== end gsqlparser.so funcstion list =====\n")
+print("==== end sqlparser.so funcstion list =====\n")
 
 p = parser.NewParser(parser.EVendor.mysql)
 print("----- new a Pasrer(vendor=1) ---- ")
